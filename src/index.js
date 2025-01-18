@@ -1,8 +1,16 @@
-import express from "express"
-import cors from "cors"
+import { connectDb } from "./db/connectDb.js";
+import {app} from "./app.js"
+ connectDb()
+.then(()=>{
+    app.on("error",(error)=>{
+        console.log(error)
+    });
 
-const app = express()
-
-app.use(cors({
-    origin:"",
-}))
+    app.listen(process.env.PORT || 4000,()=>{
+        console.log("server is running")
+    })
+    
+})
+.catch((err)=>{
+console.log('problem while connecting database',err)
+})
