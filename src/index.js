@@ -6,7 +6,7 @@ import {app} from "./app.js"
         console.log(error)
     });
 
-    app.listen(process.env.PORT || 4000,()=>{
+    app.listen(process.env.PORT || 8999,()=>{
         console.log("server is running")
     })
     

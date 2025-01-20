@@ -11,6 +11,12 @@ const userSchema = new Schema({
             trim:true,
             lowercase:true
         },
+        fullname:{
+                type:String,
+                required:true,
+                trim:true
+        },
+
         email:{
             type:String,
             required:true,
@@ -26,7 +32,6 @@ const userSchema = new Schema({
 
         refreshToken:{
             type:String,
-
         }
        
 
