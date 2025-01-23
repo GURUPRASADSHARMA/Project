@@ -4,6 +4,24 @@ import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/apiResponse.js"
 // import ApiResponse from "../utils/ApiResponse"
 
+
+const generateAccessAndRefreshToken = async (user_id)=>{
+
+    try {
+        const user = await User.findById(user_id)
+        const accessToken = user.generateAcessToken()
+        const refreshToken = user.generateRefreshToken()
+        user.refreshToken=refreshToken
+        user.save({validateBeforeSave:false})
+        return {accessToken,refreshToken}
+    } catch (error) {
+        console.log("problem during creating or setting tokens")
+        throw new ApiError(400,"problem during setting or creating tokens")
+    }
+
+}
+
+
 const registerUser = asyncHandler(async (req,res)=>{
         const {username,email,password,fullname}=req.body
         
@@ -43,7 +61,36 @@ return res
 
 const userLogin=asyncHandler(async (req,res)=>{
 const {username,password}= req.body
+const user = await User.findOne({
+    $or:[{username},{password}]
+})
+if(!user){
+    throw new ApiError(400,"account does not available")
+}
+ 
+const isPasswordCorrect = user.isPasswordCorrect(password)
+if(!isPasswordCorrect){
+    throw new ApiError(400,"password is incorrect")
+}
 
+const {refreshToken,accessToken}=generateAccessAndRefreshToken(user._id)
+
+const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+const options = {
+    httpOnly:true,
+    secure:true
+}
+
+return res.status(200)
+.cookie("accessToken",accessToken,options)
+.cookie("refreshToken",refreshToken,options)
+.json(new ApiResponse(
+    200,
+    {
+        user: loggedInUser,refreshToken,accessToken
+    },
+    "user logged in sucessfully"
+))
 })
 
 
