@@ -14,16 +14,15 @@ app.use(cors({
 
 app.use(express.json({
     limit:"16kb"
-}))
+}))  // for the json response commming from user
 
 app.use(express.urlencoded({
     extended:true,
     limit:"16kb"
-}))
+}))  // for the  response commming from url
 
-app.use(express.static("public"))
-app.use(cookieParser())
-
+app.use(express.static("public")) // it helps to store some files or images
+app.use(cookieParser()) // it helps to access the coookie value of user
 
 import router from "./Routes/userRoute.js"
 
