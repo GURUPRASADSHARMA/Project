@@ -25,6 +25,12 @@ const userSchema = new Schema({
             lowercase:true,
             unique:true
         },
+        
+        profileImage:{
+                type:String,
+                required:true
+                
+        },
 
         password:{
             type:String,
