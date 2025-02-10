@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js"
 import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/apiResponse.js"
 // import ApiResponse from "../utils/ApiResponse"
-import {uploadOnCloudinary} from "../utils/cloudinary.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 const generateAccessAndRefreshToken = async (userId) => {
 
@@ -23,7 +23,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    const {username,email,password,fullname} = req.body
+    const { username, email, password, fullname } = req.body
 
     if (
         [username, email, password, fullname].some((field) => field?.trim() == "")
@@ -38,17 +38,17 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "username or email are already exist")
     }
     console.log(req.files)
-    
+
     const profileImagePath = req.files?.profileImage[0]?.path
     console.log(profileImagePath)
-    if(!profileImagePath){
-        throw new ApiError(400,"profile image path cannot get")
+    if (!profileImagePath) {
+        throw new ApiError(400, "profile image path cannot get")
     }
 
     const profileImage = await uploadOnCloudinary(profileImagePath)
     console.log(profileImage)
-    if(!profileImage){
-        throw new ApiError(400,"profile image is required")
+    if (!profileImage) {
+        throw new ApiError(400, "profile image is required")
     }
 
     const user = await User.create({
@@ -56,7 +56,7 @@ const registerUser = asyncHandler(async (req, res) => {
         fullname,
         email,
         password,
-        profileImage:profileImage?.url
+        profileImage: profileImage?.url
 
     })
 
@@ -109,8 +109,34 @@ const userLogin = asyncHandler(async (req, res) => {
         ))
 })
 
+const userLogout = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(req.user._id,
+        {
+            $set: {
+                refreshToken: undefined
+            }
+        },
+        {
+            new: true
+        }
+
+    )
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+        .status(200)
+        .clearCookie("refreshToken", options)
+        .clearCookie("accessToken", options)
+        .json(new ApiResponse(200, {}, "logged out successfully"))
+
+
+})
 
 export {
     registerUser,
-    userLogin
+    userLogin,
+    userLogout
 }
