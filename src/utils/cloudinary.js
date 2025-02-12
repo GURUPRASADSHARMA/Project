@@ -16,9 +16,8 @@ const uploadOnCloudinary = async (localFilePath)=>{
             resource_type:"auto"
         })    // uploading file to cloudinary 
         console.log("image uploaded successfully",res.url)
-        
+        fs.unlinkSync(localFilePath)
         return res
-
     } catch (error) {
         fs.unlinkSync(localFilePath) // remove malicious file(which are not uploaded) from the server
         return null
