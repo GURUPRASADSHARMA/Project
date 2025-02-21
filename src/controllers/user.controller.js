@@ -38,16 +38,16 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(400, "username or email are already exist")
     }
-    console.log(req.files)
+    // console.log(req.files)
 
     const profileImagePath = req.files?.profileImage[0]?.path
-    console.log(profileImagePath)
+    // console.log(profileImagePath)
     if (!profileImagePath) {
         throw new ApiError(400, "profile image path cannot get")
     }
 
     const profileImage = await uploadOnCloudinary(profileImagePath)
-    console.log(profileImage)
+    // console.log(profileImage)
     if (!profileImage) {
         throw new ApiError(400, "profile image is required")
     }
