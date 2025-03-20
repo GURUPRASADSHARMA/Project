@@ -78,15 +78,16 @@ const registerUser = asyncHandler(async (req, res) => {
 const userLogin = asyncHandler(async (req, res) => {
     const { username, password } = req.body
     const user = await User.findOne({
-        $or: [{ username }, { password }]
-    })
+        $or:[{ username },{ password }]
+      })
     if (!user) {
         throw new ApiError(400, "account does not available")
     }
 
-    const isPasswordCorrect = user.isPasswordCorrect(password)
+    const isPasswordCorrect = await user.isPasswordCorrect(password)
     if (!isPasswordCorrect) {
         throw new ApiError(400, "password is incorrect")
+         
     }
 
     const { refreshToken, accessToken } = await generateAccessAndRefreshToken(user._id)
@@ -172,6 +173,60 @@ const refreshAccessToken = asyncHandler( async (req,res)=>{
  
 })
 
+const findUser = asyncHandler(async (req,res)=>{
+    const {username} = req.body
+
+    const user=await User.findOne({username}).select(" -password -refreshToken -email  -_id")
+    if(!user){
+        throw new ApiError(400,"user not found")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{user},"user found sucessfully"))
+})
+
+const changeProfileImage =asyncHandler(async(req,res)=>{
+    const newProfileImagePath=req.files?.path
+    const newProfileUrl = await uploadOnCloudinary(newProfileImagePath) 
+    if(!newProfileUrl.url){
+        throw new ApiError(400,"error occured during uploading profile")
+    }
+    const user= User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                profileImage:newProfileUrl.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,user,"profile image updated succesfully"))
+
+})
+
+const passwordReset= asyncHandler(async(req,res)=>{
+    const {oldPassword,newPassword}=req.body
+    const user = User.findById(req.user?._id)
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+    if(!isPasswordCorrect){
+        throw new ApiError(400,"old password does not matched")
+    }
+    user.password = newPassword;
+    await user.save({validateBeforeSave:false})
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"your password reset sucessfuly"))
+
+})
+
+
+
+
+
+
 
 
 
@@ -180,5 +235,8 @@ export {
     registerUser,
     userLogin,
     userLogout,
-    refreshAccessToken
+    refreshAccessToken,
+    findUser,
+    changeProfileImage,
+    passwordReset
 }
