@@ -1,4 +1,5 @@
 import { asyncHandler } from "../asyncHandler.js"
+import { FriendRequest, FriendRequest } from "../models/friendsRequest.moddels.js"
 import { User } from "../models/user.model.js"
 import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/apiResponse.js"
@@ -221,6 +222,36 @@ const passwordReset= asyncHandler(async(req,res)=>{
 
 })
 
+const sendFriendRequest = asyncHandler(async (req,res)=>{
+    try {
+        const {senderUsername,recieverUsername}= req.body
+        const sender = await User.findOne(senderUsername).select(" -password -refreshToken ")
+        const reciever = await User.findOne(recieverUsername).select(" -password -refreshToken ")
+
+        if(senderUsername==recieverUsername){
+            throw new ApiError(404,"you cannot send follow request to yourself")
+        }
+        const existingRequest = await FriendRequest.findOne({sender:sender._id,reciever:reciever._id})
+        if(existingRequest){
+            throw new ApiError(404,"request already sent")
+        }
+        const FriendRequest = new FriendRequest({sender:sender._id,reciever:reciever._id})
+        await FriendRequest.save({validateBeforeSave:false})
+        
+        return res
+        .status(200)
+        .json(404,{},"friend request sent succesfully")
+    } catch (error) {
+        throw new ApiError(404, error.message ||"error during sending friend request" )
+    }
+})
+
+const acceptRequest = asyncHandler((req,res)=>{
+})
+
+
+
+
 export {
     registerUser,
     userLogin,
@@ -228,5 +259,6 @@ export {
     refreshAccessToken,
     findUser,
     changeProfileImage,
-    passwordReset
+    passwordReset,
+    sendFriendRequest
 }
