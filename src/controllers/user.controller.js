@@ -1,5 +1,5 @@
 import { asyncHandler } from "../asyncHandler.js"
-import { FriendRequest, FriendRequest } from "../models/friendsRequest.moddels.js"
+import { FriendRequest } from "../models/friendsRequest.moddels.js"
 import { User } from "../models/user.model.js"
 import ApiError from "../utils/ApiError.js"
 import ApiResponse from "../utils/apiResponse.js"
@@ -176,7 +176,7 @@ const refreshAccessToken = asyncHandler( async (req,res)=>{
 const findUser = asyncHandler(async (req,res)=>{
     const {username} = req.body
 
-    const user=await User.findOne({username}).select(" -password -refreshToken -email  -_id")
+    const user=await User.findOne({username}).select(" -password -refreshToken -email ")
     if(!user){
         throw new ApiError(400,"user not found")
     }
@@ -223,30 +223,48 @@ const passwordReset= asyncHandler(async(req,res)=>{
 })
 
 const sendFriendRequest = asyncHandler(async (req,res)=>{
+ 
+  const {senderId,receiverId}=req.body
+    if(senderId==receiverId){
+        throw new ApiError(404,"you cannot send follow request to yourself")
+    }
     try {
-        const {senderUsername,recieverUsername}= req.body
-        const sender = await User.findOne(senderUsername).select(" -password -refreshToken ")
-        const reciever = await User.findOne(recieverUsername).select(" -password -refreshToken ")
-
-        if(senderUsername==recieverUsername){
-            throw new ApiError(404,"you cannot send follow request to yourself")
-        }
-        const existingRequest = await FriendRequest.findOne({sender:sender._id,reciever:reciever._id})
+        const existingRequest = await FriendRequest.findOne({sender:senderId,receiver:receiverId})
         if(existingRequest){
             throw new ApiError(404,"request already sent")
         }
-        const FriendRequest = new FriendRequest({sender:sender._id,reciever:reciever._id})
-        await FriendRequest.save({validateBeforeSave:false})
+        const friendRequest = new FriendRequest({sender:senderId , receiver:receiverId})
+        await friendRequest.save({validateBeforeSave:false})
         
         return res
         .status(200)
-        .json(404,{},"friend request sent succesfully")
+        .json(new ApiResponse(200,{},"friend request sent succesfully"))
     } catch (error) {
         throw new ApiError(404, error.message ||"error during sending friend request" )
     }
 })
 
-const acceptRequest = asyncHandler((req,res)=>{
+const pendingRequest=asyncHandler(async (req,res)=>{
+    const {receiverId}=req.body
+   const friendRequest = await FriendRequest.find({receiver:receiverId})
+   if(!friendRequest){
+    throw new ApiError(400,"no friend request available")
+   }
+   return res
+   .status(200)
+   .json(new ApiResponse(200,friendRequest,"friendRequest fetch succesfully"))
+})
+
+const acceptRequest = asyncHandler(async (req,res)=>{
+    const {senderId,receiverId}=req.body
+    // const friend = await FriendRequest.findOne({sender:senderId,receiver:receiverId})
+    const user =  await User.findById({receiverId})
+    user.friends = senderId;
+    await user.save({validateBeforeSave:false})
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"added to your friend list"))
+
 })
 
 
@@ -260,5 +278,7 @@ export {
     findUser,
     changeProfileImage,
     passwordReset,
-    sendFriendRequest
+    sendFriendRequest,
+    pendingRequest,
+    acceptRequest
 }

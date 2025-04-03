@@ -6,7 +6,7 @@ const friendRequestSchema = new Schema({
         ref:"User",
         required:true
     },
-    reciever:{
+    receiver:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
         required:true
@@ -18,4 +18,4 @@ const friendRequestSchema = new Schema({
     }
 },{timestamps:true})
 
-export const FriendRequest = mongoose.Schema("FriendRequest",friendRequestSchema)
+export const FriendRequest = mongoose.model("FriendRequest",friendRequestSchema)
