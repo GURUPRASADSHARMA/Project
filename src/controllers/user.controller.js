@@ -203,7 +203,7 @@ const changeProfileImage =asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(new ApiResponse(200,user,"profile image updated succesfully"))
+    .json(new ApiResponse(200,{user},"profile image updated succesfully"))
 
 })
 
@@ -225,6 +225,12 @@ const passwordReset= asyncHandler(async(req,res)=>{
 const sendFriendRequest = asyncHandler(async (req,res)=>{
  
   const {senderId,receiverId}=req.body
+  if(!senderId){
+    throw new ApiError(400,"please provide a valid seinderId")
+  }
+  if(!receiverId){
+    throw new ApiError(400,"please provide a valid receiverId")
+  }
     if(senderId==receiverId){
         throw new ApiError(404,"you cannot send follow request to yourself")
     }
@@ -246,6 +252,9 @@ const sendFriendRequest = asyncHandler(async (req,res)=>{
 
 const pendingRequest=asyncHandler(async (req,res)=>{
     const {receiverId}=req.body
+    if(!receiverId){
+        throw new ApiError(400,"please provide valid receiverId")
+    }
    const friendRequest = await FriendRequest.find({receiver:receiverId})
    if(!friendRequest){
     throw new ApiError(400,"no friend request available")
@@ -258,7 +267,12 @@ const pendingRequest=asyncHandler(async (req,res)=>{
 const acceptRequest = asyncHandler(async (req,res)=>{
     const {senderId,receiverId}=req.body
     // const friend = await FriendRequest.findOne({sender:senderId,receiver:receiverId})
-    const user =  await User.findById({receiverId})
+    // if(
+    //     [senderId,receiverId].some((field)=>field.trim()=="" || field==null)
+    // ){
+    //     throw new ApiError(404,"please provide valid id's")
+    // }
+    const user =  await User.findById(receiverId)
     user.friends = senderId;
     await user.save({validateBeforeSave:false})
     return res
@@ -266,6 +280,7 @@ const acceptRequest = asyncHandler(async (req,res)=>{
     .json(new ApiResponse(200,{},"added to your friend list"))
 
 })
+
 
 
 
